@@ -1,6 +1,6 @@
-extern crate specs;
 #[macro_use]
 extern crate specs_derive;
+extern crate specs;
 
 use specs::{Builder, DispatcherBuilder, ReadStorage, System, VecStorage, World, WriteStorage};
 
@@ -55,6 +55,7 @@ fn main() {
         .with(HelloWorld, "hello_updated", &["update_pos"])
         .build();
 
+    dispatcher.setup(&mut world.res);
     world.create_entity().with(Position { x: 4, y: 7 }).build();
     world
         .create_entity()
@@ -62,6 +63,5 @@ fn main() {
         .with(Movement { x: 1, y: 0 })
         .build();
 
-    dispatcher.setup(&mut world.res);
     dispatcher.dispatch(&mut world.res);
 }
