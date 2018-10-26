@@ -1,9 +1,8 @@
 [package]
-name = "rogue-rust"
+name = "rogue"
 version = "0.1.0"
 authors = ["Chris Atkin <atkinchris@gmail.com>"]
-publish = true
+publish = false
 
 [dependencies]
-specs = "0.12.3"
-specs-derive = "0.2.0"
+amethyst = "0.9.0"
