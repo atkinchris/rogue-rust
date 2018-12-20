@@ -1,12 +1,12 @@
-extern crate tcod;
 extern crate rand;
+extern crate tcod;
 
 use std::cmp;
 
-use tcod::console::*;
-use tcod::colors::{self, Color};
-use tcod::map::{Map as FovMap, FovAlgorithm};
 use rand::Rng;
+use tcod::colors::{self, Color};
+use tcod::console::*;
+use tcod::map::{FovAlgorithm, Map as FovMap};
 
 // actual size of the window
 const SCREEN_WIDTH: i32 = 80;
@@ -21,16 +21,28 @@ const ROOM_MAX_SIZE: i32 = 10;
 const ROOM_MIN_SIZE: i32 = 6;
 const MAX_ROOMS: i32 = 30;
 
-const FOV_ALGO: FovAlgorithm = FovAlgorithm::Basic;  // default FOV algorithm
-const FOV_LIGHT_WALLS: bool = true;  // light walls or not
+const FOV_ALGO: FovAlgorithm = FovAlgorithm::Basic; // default FOV algorithm
+const FOV_LIGHT_WALLS: bool = true; // light walls or not
 const TORCH_RADIUS: i32 = 10;
 
-const LIMIT_FPS: i32 = 20;  // 20 frames-per-second maximum
+const LIMIT_FPS: i32 = 20; // 20 frames-per-second maximum
 
 const COLOR_DARK_WALL: Color = Color { r: 0, g: 0, b: 100 };
-const COLOR_LIGHT_WALL: Color = Color { r: 130, g: 110, b: 50 };
-const COLOR_DARK_GROUND: Color = Color { r: 50, g: 50, b: 150 };
-const COLOR_LIGHT_GROUND: Color = Color { r: 200, g: 180, b: 50 };
+const COLOR_LIGHT_WALL: Color = Color {
+    r: 130,
+    g: 110,
+    b: 50,
+};
+const COLOR_DARK_GROUND: Color = Color {
+    r: 50,
+    g: 50,
+    b: 150,
+};
+const COLOR_LIGHT_GROUND: Color = Color {
+    r: 200,
+    g: 180,
+    b: 50,
+};
 
 type Map = Vec<Vec<Tile>>;
 
@@ -38,16 +50,25 @@ type Map = Vec<Vec<Tile>>;
 #[derive(Clone, Copy, Debug)]
 struct Tile {
     blocked: bool,
+    explored: bool,
     block_sight: bool,
 }
 
 impl Tile {
     pub fn empty() -> Self {
-        Tile{blocked: false, block_sight: false}
+        Tile {
+            blocked: false,
+            explored: false,
+            block_sight: false,
+        }
     }
 
     pub fn wall() -> Self {
-        Tile{blocked: true, block_sight: true}
+        Tile {
+            blocked: true,
+            explored: false,
+            block_sight: true,
+        }
     }
 }
 
@@ -62,7 +83,12 @@ struct Rect {
 
 impl Rect {
     pub fn new(x: i32, y: i32, w: i32, h: i32) -> Self {
-        Rect { x1: x, y1: y, x2: x + w, y2: y + h }
+        Rect {
+            x1: x,
+            y1: y,
+            x2: x + w,
+            y2: y + h,
+        }
     }
 
     pub fn center(&self) -> (i32, i32) {
@@ -73,8 +99,10 @@ impl Rect {
 
     pub fn intersects_with(&self, other: &Rect) -> bool {
         // returns true if this rectangle intersects with another one
-        (self.x1 <= other.x2) && (self.x2 >= other.x1) &&
-            (self.y1 <= other.y2) && (self.y2 >= other.y1)
+        (self.x1 <= other.x2)
+            && (self.x2 >= other.x1)
+            && (self.y1 <= other.y2)
+            && (self.y2 >= other.y1)
     }
 }
 
@@ -160,7 +188,9 @@ fn make_map() -> (Map, (i32, i32)) {
         let new_room = Rect::new(x, y, w, h);
 
         // run through the other rooms and see if they intersect with this one
-        let failed = rooms.iter().any(|other_room| new_room.intersects_with(other_room));
+        let failed = rooms
+            .iter()
+            .any(|other_room| new_room.intersects_with(other_room));
 
         if !failed {
             // this means there are no intersections, so this room is valid
@@ -201,8 +231,14 @@ fn make_map() -> (Map, (i32, i32)) {
     (map, starting_position)
 }
 
-fn render_all(root: &mut Root, con: &mut Offscreen, objects: &[Object], map: &Map,
-              fov_map: &mut FovMap, fov_recompute: bool) {
+fn render_all(
+    root: &mut Root,
+    con: &mut Offscreen,
+    objects: &[Object],
+    map: &mut Map,
+    fov_map: &mut FovMap,
+    fov_recompute: bool,
+) {
     if fov_recompute {
         // recompute FOV if needed (the player moved or something)
         let player = &objects[0];
@@ -221,7 +257,16 @@ fn render_all(root: &mut Root, con: &mut Offscreen, objects: &[Object], map: &Ma
                     (true, true) => COLOR_LIGHT_WALL,
                     (true, false) => COLOR_LIGHT_GROUND,
                 };
-                con.set_char_background(x, y, color, BackgroundFlag::Set);
+
+                let explored = &mut map[x as usize][y as usize].explored;
+                if visible {
+                    // since it's visible, explore it
+                    *explored = true;
+                }
+                if *explored {
+                    // show explored tiles only (any visible tile is explored already)
+                    con.set_char_background(x, y, color, BackgroundFlag::Set);
+                }
             }
         }
     }
@@ -243,12 +288,16 @@ fn handle_keys(root: &mut Root, player: &mut Object, map: &Map) -> bool {
 
     let key = root.wait_for_keypress(true);
     match key {
-        Key { code: Enter, alt: true, .. } => {
+        Key {
+            code: Enter,
+            alt: true,
+            ..
+        } => {
             // Alt+Enter: toggle fullscreen
             let fullscreen = root.is_fullscreen();
             root.set_fullscreen(!fullscreen);
         }
-        Key { code: Escape, .. } => return true,  // exit game
+        Key { code: Escape, .. } => return true, // exit game
 
         // movement keys
         Key { code: Up, .. } => player.move_by(0, -1, map),
@@ -256,7 +305,7 @@ fn handle_keys(root: &mut Root, player: &mut Object, map: &Map) -> bool {
         Key { code: Left, .. } => player.move_by(-1, 0, map),
         Key { code: Right, .. } => player.move_by(1, 0, map),
 
-        _ => {},
+        _ => {}
     }
 
     false
@@ -273,7 +322,7 @@ fn main() {
     let mut con = Offscreen::new(MAP_WIDTH, MAP_HEIGHT);
 
     // generate map (at this point it's not drawn to the screen)
-    let (map, (player_x, player_y)) = make_map();
+    let (mut map, (player_x, player_y)) = make_map();
 
     // create object representing the player
     // place the player inside the first room
@@ -289,9 +338,12 @@ fn main() {
     let mut fov_map = FovMap::new(MAP_WIDTH, MAP_HEIGHT);
     for y in 0..MAP_HEIGHT {
         for x in 0..MAP_WIDTH {
-            fov_map.set(x, y,
-                        !map[x as usize][y as usize].block_sight,
-                        !map[x as usize][y as usize].blocked);
+            fov_map.set(
+                x,
+                y,
+                !map[x as usize][y as usize].block_sight,
+                !map[x as usize][y as usize].blocked,
+            );
         }
     }
 
@@ -301,7 +353,14 @@ fn main() {
     while !root.window_closed() {
         // render the screen
         let fov_recompute = previous_player_position != (objects[0].x, objects[0].y);
-        render_all(&mut root, &mut con, &objects, &map, &mut fov_map, fov_recompute);
+        render_all(
+            &mut root,
+            &mut con,
+            &objects,
+            &mut map,
+            &mut fov_map,
+            fov_recompute,
+        );
 
         root.flush();
 
@@ -315,7 +374,7 @@ fn main() {
         previous_player_position = (player.x, player.y);
         let exit = handle_keys(&mut root, player, &map);
         if exit {
-            break
+            break;
         }
     }
 }
