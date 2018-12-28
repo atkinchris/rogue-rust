@@ -1,16 +1,15 @@
 extern crate amethyst;
 
 use amethyst::{
-    core::TransformBundle,
+    core::{frame_limiter::FrameRateLimitStrategy, transform::TransformBundle},
     input::InputBundle,
     prelude::*,
     renderer::{ColorMask, DisplayConfig, DrawFlat2D, Pipeline, RenderBundle, Stage, ALPHA},
     utils::application_root_dir,
 };
+use std::time::Duration;
 
-struct Example;
-
-impl SimpleState for Example {}
+mod states;
 
 fn main() -> amethyst::Result<()> {
     amethyst::start_logger(Default::default());
@@ -38,7 +37,12 @@ fn main() -> amethyst::Result<()> {
                 .with_sprite_visibility_sorting(&[]),
         )?;
 
-    let mut game = Application::new(resources_path, Example, game_data)?;
+    let mut game = Application::build(resources_path, states::Gameplay)?
+        .with_frame_limit(
+            FrameRateLimitStrategy::SleepAndYield(Duration::from_millis(2)),
+            60,
+        )
+        .build(game_data)?;
 
     game.run();
 
