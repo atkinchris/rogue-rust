@@ -1,0 +1,13 @@
+(
+    spritesheet_width: 128,
+    spritesheet_height: 128,
+    sprites: [
+        (
+            id: "player",
+            x: 0,
+            y: 0,
+            width: 16,
+            height: 16,
+        ),
+    ],
+)
