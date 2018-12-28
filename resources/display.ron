@@ -1,6 +1,6 @@
 (
   title: "rogue-rust",
-  dimensions: None,
+  dimensions: Some((1600, 1280)),
   max_dimensions: None,
   min_dimensions: None,
   fullscreen: false,
