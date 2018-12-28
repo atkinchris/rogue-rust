@@ -9,10 +9,14 @@ use amethyst::{
 };
 use std::time::Duration;
 
+mod components;
 mod states;
+mod systems;
 
 fn main() -> amethyst::Result<()> {
-    amethyst::start_logger(Default::default());
+    amethyst::Logger::from_config(Default::default())
+        .level_for("gfx_device_gl", amethyst::LogLevelFilter::Warn)
+        .start();
 
     let resources_path = format!("{}/resources", application_root_dir());
     let display_config_path = format!("{}/display.ron", resources_path);
@@ -35,7 +39,12 @@ fn main() -> amethyst::Result<()> {
             RenderBundle::new(pipe, Some(display_config))
                 .with_sprite_sheet_processor()
                 .with_sprite_visibility_sorting(&[]),
-        )?;
+        )?
+        .with(
+            systems::MovementSystem,
+            "movement_system",
+            &["input_system"],
+        );
 
     let mut game = Application::build(resources_path, states::Gameplay)?
         .with_frame_limit(

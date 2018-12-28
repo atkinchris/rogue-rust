@@ -6,6 +6,8 @@ use amethyst::renderer::{
   Texture, TextureMetadata,
 };
 
+use crate::components::IsPlayer;
+
 pub struct Gameplay;
 
 pub const TILE_SIZE: f32 = 16.0;
@@ -40,6 +42,7 @@ fn initialise_entities(world: &mut World, sprite_sheet_handle: SpriteSheetHandle
     .create_entity()
     .with(transform)
     .with(sprite_render)
+    .with(IsPlayer)
     .build();
 }
 
