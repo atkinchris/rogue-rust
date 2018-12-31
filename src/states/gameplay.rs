@@ -6,7 +6,7 @@ use amethyst::renderer::{
   Texture, TextureMetadata,
 };
 
-use crate::components::IsPlayer;
+use crate::components::{Energy, IsPlayer};
 
 pub struct Gameplay;
 
@@ -43,6 +43,7 @@ fn initialise_entities(world: &mut World, sprite_sheet_handle: SpriteSheetHandle
     .with(transform)
     .with(sprite_render)
     .with(IsPlayer)
+    .with(Energy::new())
     .build();
 }
 

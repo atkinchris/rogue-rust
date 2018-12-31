@@ -14,10 +14,10 @@ impl<'s> System<'s> for MovementSystem {
   );
 
   fn run(&mut self, (mut transforms, players, input): Self::SystemData) {
-    for (_, transform) in (&players, &mut transforms).join() {
+    for (_, _transform) in (&players, &mut transforms).join() {
       let movement = (input.axis_value("player_x"), input.axis_value("player_y"));
 
-      println!("Movement {:?}", movement);
+      // println!("Movement {:?}", movement);
     }
   }
 }
