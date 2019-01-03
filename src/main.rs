@@ -43,9 +43,14 @@ fn main() -> amethyst::Result<()> {
         )?
         .with(systems::EnergySystem, "energy_system", &[])
         .with(
+            systems::IntentSystem,
+            "intent_system",
+            &["energy_system", "input_system"],
+        )
+        .with(
             systems::MovementSystem,
             "movement_system",
-            &["input_system"],
+            &["intent_system"],
         );
 
     let mut game = Application::build(resources_path, states::Gameplay)?
