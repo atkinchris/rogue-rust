@@ -1,5 +1,6 @@
 use amethyst::ecs::{Component, VecStorage};
 
+#[derive(Default, Debug)]
 pub struct Energy {
   pub energy: i32,
   pub speed: i32,

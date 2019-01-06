@@ -10,6 +10,7 @@ use amethyst::{
 use std::time::Duration;
 
 mod components;
+mod constants;
 mod resources;
 mod states;
 mod systems;
@@ -41,12 +42,17 @@ fn main() -> amethyst::Result<()> {
                 .with_sprite_sheet_processor()
                 .with_sprite_visibility_sorting(&[]),
         )?
-        .with(systems::EnergySystem, "energy_system", &[])
         .with(
-            systems::IntentSystem,
-            "intent_system",
-            &["energy_system", "input_system"],
+            systems::InputSystem,
+            "input_parse_system",
+            &["input_system"],
         )
+        .with(
+            systems::EnergySystem,
+            "energy_system",
+            &["input_parse_system"],
+        )
+        .with(systems::IntentSystem, "intent_system", &["energy_system"])
         .with(
             systems::MovementSystem,
             "movement_system",
