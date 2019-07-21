@@ -1,5 +1,5 @@
 use amethyst::ecs::{Read, System, Write};
-use amethyst::input::InputHandler;
+use amethyst::input::{InputHandler, StringBindings};
 
 use crate::constants::InputType;
 use crate::resources::TurnState;
@@ -7,7 +7,7 @@ use crate::resources::TurnState;
 pub struct InputSystem;
 
 impl<'s> System<'s> for InputSystem {
-  type SystemData = (Read<'s, InputHandler<String, String>>, Write<'s, TurnState>);
+  type SystemData = (Read<'s, InputHandler<StringBindings>>, Write<'s, TurnState>);
 
   fn run(&mut self, (input, mut turn_state): Self::SystemData) {
     let movement = match (

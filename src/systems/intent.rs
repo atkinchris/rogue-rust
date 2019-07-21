@@ -1,5 +1,5 @@
 use amethyst::ecs::{Read, ReadStorage, System, Write, WriteStorage};
-use amethyst::input::InputHandler;
+use amethyst::input::{InputHandler, StringBindings};
 
 use crate::components::{IsPlayer, MovementIntent};
 use crate::resources::TurnState;
@@ -10,7 +10,7 @@ impl<'s> System<'s> for IntentSystem {
   type SystemData = (
     Write<'s, TurnState>,
     ReadStorage<'s, IsPlayer>,
-    Read<'s, InputHandler<String, String>>,
+    Read<'s, InputHandler<StringBindings>>,
     WriteStorage<'s, MovementIntent>,
   );
 

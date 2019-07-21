@@ -1,47 +1,51 @@
-extern crate amethyst;
-
+use amethyst::input::{InputBundle, StringBindings};
 use amethyst::{
-    core::{frame_limiter::FrameRateLimitStrategy, transform::TransformBundle},
-    input::InputBundle,
+    assets::Processor,
+    core::transform::TransformBundle,
     prelude::*,
-    renderer::{ColorMask, DisplayConfig, DrawFlat2D, Pipeline, RenderBundle, Stage, ALPHA},
+    renderer::{
+        sprite_visibility::SpriteVisibilitySortingSystem, types::DefaultBackend, RenderingSystem,
+        SpriteSheet,
+    },
     utils::application_root_dir,
+    window::WindowBundle,
 };
-use std::time::Duration;
 
 mod components;
 mod constants;
+mod render;
 mod resources;
 mod states;
 mod systems;
 
 fn main() -> amethyst::Result<()> {
-    amethyst::Logger::from_config(Default::default())
-        .level_for("gfx_device_gl", amethyst::LogLevelFilter::Warn)
-        .start();
+    amethyst::start_logger(Default::default());
 
-    let resources_path = format!("{}/resources", application_root_dir());
-    let display_config_path = format!("{}/display.ron", resources_path);
-    let key_bindings_path = format!("{}/input.ron", resources_path);
+    let app_root = application_root_dir()?;
 
-    let display_config = DisplayConfig::load(&display_config_path);
+    let resources_path = app_root.join("resources");
+    let display_config_path = resources_path.join("display.ron");
+    let key_bindings_path = resources_path.join("input.ron");
 
-    let pipe = Pipeline::build().with_stage(
-        Stage::with_backbuffer()
-            .clear_target([1.0, 1.0, 1.0, 1.0], 1.0)
-            .with_pass(DrawFlat2D::new().with_transparency(ColorMask::all(), ALPHA, None)),
-    );
+    let render_graph = render::RenderGraph::default();
+    let render_system = RenderingSystem::<DefaultBackend, _>::new(render_graph);
 
     let game_data = GameDataBuilder::default()
         .with_bundle(
-            InputBundle::<String, String>::new().with_bindings_from_file(&key_bindings_path)?,
+            InputBundle::<StringBindings>::new().with_bindings_from_file(key_bindings_path)?,
         )?
+        .with_bundle(WindowBundle::from_config_path(display_config_path))?
         .with_bundle(TransformBundle::new())?
-        .with_bundle(
-            RenderBundle::new(pipe, Some(display_config))
-                .with_sprite_sheet_processor()
-                .with_sprite_visibility_sorting(&[]),
-        )?
+        .with(
+            SpriteVisibilitySortingSystem::new(),
+            "sprite_visibility_system",
+            &["transform_system"],
+        )
+        .with(
+            Processor::<SpriteSheet>::new(),
+            "sprite_sheet_processor",
+            &[],
+        )
         .with(
             systems::InputSystem,
             "input_parse_system",
@@ -57,15 +61,10 @@ fn main() -> amethyst::Result<()> {
             systems::MovementSystem,
             "movement_system",
             &["intent_system"],
-        );
-
-    let mut game = Application::build(resources_path, states::Gameplay)?
-        .with_frame_limit(
-            FrameRateLimitStrategy::SleepAndYield(Duration::from_millis(2)),
-            60,
         )
-        .build(game_data)?;
+        .with_thread_local(render_system);
 
+    let mut game = Application::new(resources_path, states::Gameplay, game_data)?;
     game.run();
 
     Ok(())
