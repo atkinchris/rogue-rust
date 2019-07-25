@@ -7,7 +7,7 @@ use amethyst::{
         sprite_visibility::SpriteVisibilitySortingSystem, types::DefaultBackend, RenderingSystem,
         SpriteSheet,
     },
-    utils::application_root_dir,
+    utils::{application_root_dir, ortho_camera::CameraOrthoSystem},
     window::WindowBundle,
 };
 
@@ -62,6 +62,7 @@ fn main() -> amethyst::Result<()> {
             "movement_system",
             &["intent_system"],
         )
+        .with(CameraOrthoSystem, "camera_ortho_system", &[])
         .with_thread_local(render_system);
 
     let mut game = Application::new(resources_path, states::Gameplay, game_data)?;

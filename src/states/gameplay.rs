@@ -2,6 +2,7 @@ use amethyst::assets::{AssetStorage, Handle, Loader};
 use amethyst::core::transform::Transform;
 use amethyst::prelude::*;
 use amethyst::renderer::{Camera, ImageFormat, Sprite, SpriteRender, SpriteSheet, Texture};
+use amethyst::utils::ortho_camera::*;
 
 use crate::components::{Energy, IsPlayer};
 
@@ -14,11 +15,21 @@ pub const CAMERA_HEIGHT: f32 = (40 * TILE_SIZE) as f32;
 
 fn initialise_camera(world: &mut World) {
   let mut transform = Transform::default();
-  transform.set_translation_xyz(CAMERA_WIDTH * 0.5, CAMERA_HEIGHT * 0.5, 1.0);
+  transform.set_translation_xyz(CAMERA_WIDTH * 0.5, CAMERA_HEIGHT * 0.5, 2.0);
+
+  let mut ortho = CameraOrtho::default();
+  ortho.mode = CameraNormalizeMode::Contain;
+  ortho.world_coordinates = CameraOrthoWorldCoordinates {
+    left: 0.0,
+    top: CAMERA_HEIGHT,
+    right: CAMERA_WIDTH,
+    bottom: 0.0,
+  };
 
   world
     .create_entity()
     .with(Camera::standard_2d(CAMERA_WIDTH, CAMERA_HEIGHT))
+    .with(ortho)
     .with(transform)
     .build();
 }
@@ -30,7 +41,7 @@ fn initialise_entities(world: &mut World, sprite_sheet_handle: Handle<SpriteShee
     sprite_number: 0,
   };
 
-  transform.set_translation_xyz(CAMERA_WIDTH * 0.5, CAMERA_HEIGHT * 0.5, 0.0);
+  transform.set_translation_xyz(10.0 * TILE_SIZE as f32, 10.0 * TILE_SIZE as f32, 0.0);
 
   world
     .create_entity()
